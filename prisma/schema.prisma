@@ -44,7 +44,7 @@ enum HabitStatus {
 model HabitLog {
   id        Int         @id @default(autoincrement())
   habitId   Int
-  date      String
+  date      DateTime
   status    HabitStatus
   createdAt DateTime    @default(now())
 

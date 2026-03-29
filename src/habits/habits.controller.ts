@@ -1,55 +1,61 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
-import { HabitsService } from './habits.service';
-import { CreateHabitDto } from './dto/create-habit.dto';
-import { UpdateHabitDto } from './dto/update-habit.dto';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseIntPipe,
+    Patch,
+    Post,
+    Query,
+} from "@nestjs/common";
+import { HabitsService } from "./habits.service";
+import { CreateHabitDto } from "./dto/create-habit.dto";
+import { UpdateHabitDto } from "./dto/update-habit.dto";
 
-@Controller('habits')
+@Controller("habits")
 export class HabitsController {
-    constructor(
-        private readonly habitsService: HabitsService,
-    ) {}
+    constructor(private readonly habitsService: HabitsService) {}
 
     // @Query('userId', ParseIntPipe) userId: number либо убрать декоратором, либо при авторизации
 
     @Get()
-    findAll(@Query('userId', ParseIntPipe) userId: number) {
-        return this.habitsService.getAll(userId)
+    findAll(@Query("userId", ParseIntPipe) userId: number) {
+        return this.habitsService.getAll(userId);
     }
 
     @Post()
     async create(
         @Body() dto: CreateHabitDto,
-        @Query('userId', ParseIntPipe) userId: number
+        @Query("userId", ParseIntPipe) userId: number,
     ) {
-        return this.habitsService.create(dto, userId)
+        return this.habitsService.create(dto, userId);
     }
 
-    @Get(':id')
+    @Get(":id")
     async findOne(
-        @Param('id', ParseIntPipe) id: number,
-        @Query('userId', ParseIntPipe) userId: number
+        @Param("id", ParseIntPipe) id: number,
+        @Query("userId", ParseIntPipe) userId: number,
     ) {
-        return this.habitsService.findById(id, userId)
-
+        return this.habitsService.findById(id, userId);
     }
 
-    @Patch(':id')
+    @Patch(":id")
     async update(
-        @Param('id', ParseIntPipe) id: number,
+        @Param("id", ParseIntPipe) id: number,
         @Body() dto: UpdateHabitDto,
-        @Query('userId', ParseIntPipe) userId: number
+        @Query("userId", ParseIntPipe) userId: number,
     ) {
-        return this.habitsService.update(id, userId, dto)
-
+        return this.habitsService.update(id, userId, dto);
     }
 
-    @Delete(':id')
+    @Delete(":id")
     async delete(
-        @Param('id', ParseIntPipe) id: number,
-        @Query('userId', ParseIntPipe) userId: number
+        @Param("id", ParseIntPipe) id: number,
+        @Query("userId", ParseIntPipe) userId: number,
     ) {
-        await this.habitsService.delete(id, userId)
+        await this.habitsService.delete(id, userId);
 
-        return { message: 'Habit successfully deleted' };
+        return { message: "Habit successfully deleted" };
     }
 }
