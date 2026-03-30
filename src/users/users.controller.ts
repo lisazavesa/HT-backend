@@ -5,11 +5,15 @@ import {
     Param,
     ParseIntPipe,
     Post,
+    Req,
+    UseGuards,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { Public } from "src/auth/decorators/public.decorator";
+import { JwtAccessGuard } from "src/auth/guards/jwt-access.guard";
 
+@UseGuards(JwtAccessGuard)
 @Controller("users")
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
@@ -18,6 +22,11 @@ export class UsersController {
     @Post()
     create(@Body() dto: CreateUserDto) {
         return this.usersService.create(dto);
+    }
+
+    @Get("me")
+    getMe(@Req() req) {
+        return this.usersService.findById(req.user.id);
     }
 
     @Get(":id")
