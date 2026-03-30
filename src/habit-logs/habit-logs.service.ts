@@ -11,6 +11,13 @@ import { normalizeDate } from "../helpers/normalize-date";
 export class HabitLogsService {
     constructor(private readonly prisma: PrismaService) {}
 
+    private formatLog(log: any) {
+        return {
+            ...log,
+            date: log.date.toISOString().slice(0, 10),
+        };
+    }
+
     async upsert(dto: UpsertHabitLogsDto, userId: number) {
         const habit = await this.prisma.habit.findFirst({
             where: {
@@ -23,9 +30,9 @@ export class HabitLogsService {
             throw new NotFoundException("Habit not found");
         }
 
-        const parsedDate = new Date(dto.date);
+        const parsedDate = normalizeDate(dto.date);
 
-        return this.prisma.habitLog.upsert({
+        const log = await this.prisma.habitLog.upsert({
             where: {
                 habitId_date: {
                     habitId: dto.habitId,
@@ -41,6 +48,8 @@ export class HabitLogsService {
                 status: dto.status,
             },
         });
+
+        return this.formatLog(log);
     }
 
     async getByHabitId(dto: GetHabitLogsDto, userId: number) {
@@ -61,15 +70,17 @@ export class HabitLogsService {
 
         if (dto.from || dto.to) {
             where.date = {
-                ...(dto.from ? { gte: new Date(dto.from) } : {}),
-                ...(dto.to ? { lte: new Date(dto.to) } : {}),
+                ...(dto.from ? { gte: normalizeDate(dto.from) } : {}),
+                ...(dto.to ? { lte: normalizeDate(dto.to) } : {}),
             };
         }
 
-        return this.prisma.habitLog.findMany({
+        const logs = await this.prisma.habitLog.findMany({
             where,
             orderBy: { date: "asc" },
         });
+
+        return logs.map((log) => this.formatLog(log));
     }
 
     async deleteLogByDate(dto: DeleteLogDto, userId: number) {
