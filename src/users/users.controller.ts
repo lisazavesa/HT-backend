@@ -4,6 +4,7 @@ import {
     Get,
     Param,
     ParseIntPipe,
+    Patch,
     Post,
     Req,
     UseGuards,
@@ -12,6 +13,7 @@ import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { Public } from "src/auth/decorators/public.decorator";
 import { JwtAccessGuard } from "src/auth/guards/jwt-access.guard";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @UseGuards(JwtAccessGuard)
 @Controller("users")
@@ -27,6 +29,11 @@ export class UsersController {
     @Get("me")
     getMe(@Req() req) {
         return this.usersService.findById(req.user.id);
+    }
+
+    @Patch("me")
+    updateMe(@Req() req, @Body() dto: UpdateUserDto) {
+        return this.usersService.updateUser(req.user.id, dto);
     }
 
     @Get(":id")
