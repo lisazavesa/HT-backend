@@ -7,9 +7,10 @@ import { PrismaService } from './prisma/prisma.service';
 import { HabitLogsModule } from './habit-logs/habit-logs.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
-  imports: [HabitsModule, PrismaModule, HabitLogsModule, UsersModule, AuthModule],
+  imports: [HabitsModule, PrismaModule, HabitLogsModule, UsersModule, AuthModule, StatsModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
