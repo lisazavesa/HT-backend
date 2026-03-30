@@ -1,157 +1,158 @@
+import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
 import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiCookieAuth,
-} from '@nestjs/swagger';
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiCookieAuth,
+} from "@nestjs/swagger";
 
-import { AuthService } from './auth.service';
-import { ConfigService } from '@nestjs/config';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { clearAuthCookies, setAuthCookies } from './auth.cookies';
-import { JwtAccessGuard } from './guards/jwt-access.guard';
-import type { Response } from 'express';
-import { parseDurationMs } from './utils/parse-duration-ms';
-import { CurrentUser } from './decorators/current-user.decorator';
-import type { AuthUser, AuthUserWithRefresh } from './types/auth-user.type';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { Public } from './decorators/public.decorator';
+import { AuthService } from "./auth.service";
+import { ConfigService } from "@nestjs/config";
+import { RegisterDto } from "./dto/register.dto";
+import { LoginDto } from "./dto/login.dto";
+import { clearAuthCookies, setAuthCookies } from "./auth.cookies";
+import { JwtAccessGuard } from "./guards/jwt-access.guard";
+import type { Response } from "express";
+import { parseDurationMs } from "./utils/parse-duration-ms";
+import { CurrentUser } from "./decorators/current-user.decorator";
+import type { AuthUser, AuthUserWithRefresh } from "./types/auth-user.type";
+import { JwtRefreshGuard } from "./guards/jwt-refresh.guard";
+import { Public } from "./decorators/public.decorator";
 
-@ApiTags('Auth')
-@Controller('auth')
+@ApiTags("Auth")
+@Controller("auth")
 export class AuthController {
-  constructor(
-    private readonly auth: AuthService,
-    private readonly config: ConfigService,
-  ) {}
+    constructor(
+        private readonly auth: AuthService,
+        private readonly config: ConfigService,
+    ) {}
 
-  private cookieSecure() {
-    return (this.config.get<string>('COOKIE_SECURE') ?? 'false') === 'true';
-  }
+    private cookieSecure() {
+        return (this.config.get<string>("COOKIE_SECURE") ?? "false") === "true";
+    }
 
-  private cookieSameSite(): 'lax' | 'strict' | 'none' {
-    const v = (this.config.get<string>('COOKIE_SAMESITE') ?? 'lax').toLowerCase();
-    if (v === 'none' || v === 'strict' || v === 'lax') return v;
-    return 'lax';
-  }
+    private cookieSameSite(): "lax" | "strict" | "none" {
+        const v = (
+            this.config.get<string>("COOKIE_SAMESITE") ?? "lax"
+        ).toLowerCase();
+        if (v === "none" && !this.cookieSecure()) {
+            return "lax";
+        }
+        if (v === "none" || v === "strict" || v === "lax") return v;
+        return "lax";
+    }
 
-  private accessMaxAgeMs() {
-    const v = this.config.get<string>('JWT_ACCESS_EXPIRES') ?? '15m';
-    return parseDurationMs(v);
-  }
+    private accessMaxAgeMs() {
+        const v = this.config.get<string>("JWT_ACCESS_EXPIRES") ?? "15m";
+        return parseDurationMs(v);
+    }
 
-  private refreshMaxAgeMs() {
-    const v = this.config.get<string>('JWT_REFRESH_EXPIRES') ?? '7d';
-    return parseDurationMs(v);
-  }
+    private refreshMaxAgeMs() {
+        const v = this.config.get<string>("JWT_REFRESH_EXPIRES") ?? "7d";
+        return parseDurationMs(v);
+    }
 
-  //REGISTER
-  @Public()
-  @Post('register')
-  @ApiOperation({ summary: 'Регистрация пользователя' })
-  @ApiResponse({ status: 201, description: 'Пользователь создан' })
-  async register(
-    @Body() dto: RegisterDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const result = await this.auth.register(dto);
+    //REGISTER
+    @Public()
+    @Post("register")
+    @ApiOperation({ summary: "Регистрация пользователя" })
+    @ApiResponse({ status: 201, description: "Пользователь создан" })
+    async register(
+        @Body() dto: RegisterDto,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const result = await this.auth.register(dto);
 
-    setAuthCookies({
-      res,
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      secure: this.cookieSecure(),
-      sameSite: this.cookieSameSite(),
-      accessMaxAgeMs: this.accessMaxAgeMs(),
-      refreshMaxAgeMs: this.refreshMaxAgeMs(),
-    });
+        setAuthCookies({
+            res,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            secure: this.cookieSecure(),
+            sameSite: this.cookieSameSite(),
+            accessMaxAgeMs: this.accessMaxAgeMs(),
+            refreshMaxAgeMs: this.refreshMaxAgeMs(),
+        });
 
-    return { user: result.user };
-  }
+        return { user: result.user };
+    }
 
-  // LOGIN
-  @Public()
-  @Post('login')
-  @ApiOperation({ summary: 'Логин пользователя' })
-  @ApiResponse({ status: 200, description: 'Успешный вход' })
-  async login(
-    @Body() dto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const result = await this.auth.login(dto);
+    // LOGIN
+    @Public()
+    @Post("login")
+    @ApiOperation({ summary: "Логин пользователя" })
+    @ApiResponse({ status: 200, description: "Успешный вход" })
+    async login(
+        @Body() dto: LoginDto,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const result = await this.auth.login(dto);
 
-    setAuthCookies({
-      res,
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      secure: this.cookieSecure(),
-      sameSite: this.cookieSameSite(),
-      accessMaxAgeMs: this.accessMaxAgeMs(),
-      refreshMaxAgeMs: this.refreshMaxAgeMs(),
-    });
+        setAuthCookies({
+            res,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            secure: this.cookieSecure(),
+            sameSite: this.cookieSameSite(),
+            accessMaxAgeMs: this.accessMaxAgeMs(),
+            refreshMaxAgeMs: this.refreshMaxAgeMs(),
+        });
 
-    return { user: result.user };
-  }
+        return { user: result.user };
+    }
 
-  // REFRESH
-  @Public()
-  @UseGuards(JwtRefreshGuard)
-  @Post('refresh')
-  @ApiOperation({ summary: 'Обновление токенов' })
-  @ApiResponse({ status: 200, description: 'Токены обновлены' })
-  async refresh(
-    @CurrentUser() user: AuthUserWithRefresh,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const result = await this.auth.refreshTokens(user.id, user.refreshToken);
+    // REFRESH
+    @Public()
+    @UseGuards(JwtRefreshGuard)
+    @Post("refresh")
+    @ApiOperation({ summary: "Обновление токенов" })
+    @ApiResponse({ status: 200, description: "Токены обновлены" })
+    async refresh(
+        @CurrentUser() user: AuthUserWithRefresh,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        const result = await this.auth.refreshTokens(
+            user.id,
+            user.refreshToken,
+        );
 
-    setAuthCookies({
-      res,
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      secure: this.cookieSecure(),
-      sameSite: this.cookieSameSite(),
-      accessMaxAgeMs: this.accessMaxAgeMs(),
-      refreshMaxAgeMs: this.refreshMaxAgeMs(),
-    });
+        setAuthCookies({
+            res,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            secure: this.cookieSecure(),
+            sameSite: this.cookieSameSite(),
+            accessMaxAgeMs: this.accessMaxAgeMs(),
+            refreshMaxAgeMs: this.refreshMaxAgeMs(),
+        });
 
-    return { user: result.user };
-  }
+        return { user: result.user };
+    }
 
-  // LOGOUT
-  @UseGuards(JwtAccessGuard)
-  @Post('logout')
-  @ApiCookieAuth('accessToken')
-  @ApiOperation({ summary: 'Выход из системы' })
-  async logout(
-    @CurrentUser() user: AuthUser,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    await this.auth.logout(user.id);
+    // LOGOUT
+    @UseGuards(JwtAccessGuard)
+    @Post("logout")
+    @ApiCookieAuth("accessToken")
+    @ApiOperation({ summary: "Выход из системы" })
+    async logout(
+        @CurrentUser() user: AuthUser,
+        @Res({ passthrough: true }) res: Response,
+    ) {
+        await this.auth.logout(user.id);
 
-    clearAuthCookies(res, {
-      secure: this.cookieSecure(),
-      sameSite: this.cookieSameSite(),
-    });
+        clearAuthCookies(res, {
+            secure: this.cookieSecure(),
+            sameSite: this.cookieSameSite(),
+        });
 
-    return { ok: true };
-  }
+        return { ok: true };
+    }
 
-  // STATUS 
-  @UseGuards(JwtAccessGuard)
-  @Get('status')
-  @ApiCookieAuth('accessToken')
-  @ApiOperation({ summary: 'Проверка авторизации' })
-  status(@CurrentUser() user: AuthUser) {
-    return { authenticated: true, user };
-  }
+    // STATUS
+    @UseGuards(JwtAccessGuard)
+    @Get("status")
+    @ApiCookieAuth("accessToken")
+    @ApiOperation({ summary: "Проверка авторизации" })
+    status(@CurrentUser() user: AuthUser) {
+        return { authenticated: true, user };
+    }
 }

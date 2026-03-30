@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { HabitStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { GetHabitLogsDto } from "./dto/habit-logs.dto";
