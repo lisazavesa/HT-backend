@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
-import { AuthUser, Role } from 'src/auth/types/auth-user.type';
+import { AuthUser } from 'src/auth/types/auth-user.type';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 function cookieExtractorAccess(req: Request): string | null {
@@ -13,7 +13,6 @@ function cookieExtractorAccess(req: Request): string | null {
 type JwtAccessPayload = {
   sub: number;
   email: string;
-  role: Role;
   tokenVersion: number;
 };
 
@@ -46,6 +45,6 @@ export class JwtAccessStrategy extends PassportStrategy(
       throw new UnauthorizedException('Token expired');
     }
 
-    return { id: payload.sub, email: payload.email, role: payload.role };
+    return { id: payload.sub, email: payload.email };
   }
 }

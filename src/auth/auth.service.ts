@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -77,7 +78,7 @@ export class AuthService {
   }
 
   // вход в аккаунт
-  async login(dto: RegisterDto) {
+  async login(dto: LoginDto) {
     const email = dto.email.toLowerCase().trim();
     const user = await this.prisma.user.findUnique({
       where: {

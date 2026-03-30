@@ -22,6 +22,7 @@ import { Public } from './decorators/public.decorator';
 // import { Throttle } from '@nestjs/throttler';
 
 // @ApiTags('auth')
+@UseGuards(JwtAccessGuard)
 @Controller('auth')
 export class AuthController {
   constructor(
