@@ -4,6 +4,8 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 import { GetHabitLogsDto } from "./dto/habit-logs.dto";
 import { UpsertHabitLogsDto } from "./dto/upsert-habit-logs.dto";
+import { DeleteLogDto } from "./dto/delete-log-dto";
+import { normalizeDate } from "../helpers/normalize-date";
 
 @Injectable()
 export class HabitLogsService {
@@ -68,5 +70,44 @@ export class HabitLogsService {
             where,
             orderBy: { date: "asc" },
         });
+    }
+
+    async deleteLogByDate(dto: DeleteLogDto, userId: number) {
+        const habit = await this.prisma.habit.findFirst({
+            where: {
+                id: dto.habitId,
+                userId,
+            },
+        });
+
+        if (!habit) {
+            throw new NotFoundException("Habit not found");
+        }
+
+        const date = normalizeDate(dto.date);
+
+        const log = await this.prisma.habitLog.findUnique({
+            where: {
+                habitId_date: {
+                    habitId: dto.habitId,
+                    date,
+                },
+            },
+        });
+
+        if (!log) {
+            throw new NotFoundException("Log not found");
+        }
+
+        await this.prisma.habitLog.delete({
+            where: {
+                habitId_date: {
+                    habitId: dto.habitId,
+                    date,
+                },
+            },
+        });
+
+        return { success: true };
     }
 }
