@@ -3,26 +3,30 @@ import {
   Controller,
   Get,
   Post,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 import { clearAuthCookies, setAuthCookies } from './auth.cookies';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { parseDurationMs } from './utils/parse-duration-ms';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { AuthUser, AuthUserWithRefresh } from './types/auth-user.type';
-// import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Public } from './decorators/public.decorator';
-// import { Throttle } from '@nestjs/throttler';
 
-// @ApiTags('auth')
-@UseGuards(JwtAccessGuard)
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -35,9 +39,7 @@ export class AuthController {
   }
 
   private cookieSameSite(): 'lax' | 'strict' | 'none' {
-    const v = (
-      this.config.get<string>('COOKIE_SAMESITE') ?? 'lax'
-    ).toLowerCase();
+    const v = (this.config.get<string>('COOKIE_SAMESITE') ?? 'lax').toLowerCase();
     if (v === 'none' || v === 'strict' || v === 'lax') return v;
     return 'lax';
   }
@@ -52,8 +54,11 @@ export class AuthController {
     return parseDurationMs(v);
   }
 
+  //REGISTER
   @Public()
   @Post('register')
+  @ApiOperation({ summary: 'Регистрация пользователя' })
+  @ApiResponse({ status: 201, description: 'Пользователь создан' })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -73,10 +78,13 @@ export class AuthController {
     return { user: result.user };
   }
 
-  @Post('login')
+  // LOGIN
   @Public()
+  @Post('login')
+  @ApiOperation({ summary: 'Логин пользователя' })
+  @ApiResponse({ status: 200, description: 'Успешный вход' })
   async login(
-    @Body() dto: RegisterDto,
+    @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.auth.login(dto);
@@ -94,18 +102,17 @@ export class AuthController {
     return { user: result.user };
   }
 
+  // REFRESH
   @Public()
-  // @ApiCookieAuth('accessToken')
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
+  @ApiOperation({ summary: 'Обновление токенов' })
+  @ApiResponse({ status: 200, description: 'Токены обновлены' })
   async refresh(
     @CurrentUser() user: AuthUserWithRefresh,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.auth.refreshTokens(
-      user.id,
-      user.refreshToken,
-    );
+    const result = await this.auth.refreshTokens(user.id, user.refreshToken);
 
     setAuthCookies({
       res,
@@ -120,8 +127,11 @@ export class AuthController {
     return { user: result.user };
   }
 
-  // @ApiCookieAuth('accessToken')
+  // LOGOUT
+  @UseGuards(JwtAccessGuard)
   @Post('logout')
+  @ApiCookieAuth('accessToken')
+  @ApiOperation({ summary: 'Выход из системы' })
   async logout(
     @CurrentUser() user: AuthUser,
     @Res({ passthrough: true }) res: Response,
@@ -136,8 +146,11 @@ export class AuthController {
     return { ok: true };
   }
 
-  // @ApiCookieAuth('accessToken')
+  // STATUS 
+  @UseGuards(JwtAccessGuard)
   @Get('status')
+  @ApiCookieAuth('accessToken')
+  @ApiOperation({ summary: 'Проверка авторизации' })
   status(@CurrentUser() user: AuthUser) {
     return { authenticated: true, user };
   }
