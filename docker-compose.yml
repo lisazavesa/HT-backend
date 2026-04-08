@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: habits-tracker-legacy_postgres
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mindweawe
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
